@@ -21,10 +21,15 @@
             margin: 0 auto;
         }
         
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
         header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
+            padding-bottom: 20px;
             border-bottom: 1px solid #ddd;
         }
         
@@ -35,30 +40,32 @@
         
         .description {
             color: #7f8c8d;
-            font-size: 16px;
+            font-size: 1.1rem;
         }
         
-        .container {
+        .main-content {
             display: flex;
-            flex-direction: column;
-            gap: 30px;
+            flex-wrap: wrap;
+            gap: 25px;
         }
         
-        .card {
+        .input-section, .results-section {
+            flex: 1;
+            min-width: 300px;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
         
-        .card h2 {
+        .section-title {
             color: #3498db;
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 1px solid #eee;
         }
         
-        .input-group {
+        .form-group {
             margin-bottom: 20px;
         }
         
@@ -69,48 +76,50 @@
             color: #2c3e50;
         }
         
-        input[type="number"] {
+        input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            transition: border 0.3s;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
         }
         
-        input[type="number"]:focus {
-            border-color: #3498db;
+        input:focus {
             outline: none;
+            border-color: #3498db;
         }
         
-        .consumption-grid {
+        .daily-inputs {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
         
-        .consumption-day {
+        .daily-input {
             display: flex;
             flex-direction: column;
         }
         
-        .day-label {
-            font-size: 14px;
-            color: #7f8c8d;
+        .daily-input label {
+            font-size: 0.85rem;
+            font-weight: normal;
             margin-bottom: 5px;
+            color: #7f8c8d;
         }
         
         button {
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 4px;
+            padding: 12px 24px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 1rem;
             font-weight: 600;
             transition: background-color 0.3s;
+            width: 100%;
             margin-top: 10px;
         }
         
@@ -118,183 +127,198 @@
             background-color: #2980b9;
         }
         
-        .results {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border-left: 4px solid #3498db;
-        }
-        
         .result-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
         }
         
-        .result-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
+        .result-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
         
         .result-value {
-            font-size: 24px;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #2c3e50;
         }
         
-        .result-label {
-            font-size: 16px;
-            color: #7f8c8d;
-            margin-bottom: 5px;
-        }
-        
-        .warning {
+        .highlight {
             color: #e74c3c;
-            font-weight: 600;
         }
         
-        .info {
-            color: #f39c12;
-            font-weight: 600;
+        .info-text {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
         }
         
-        .ok {
-            color: #27ae60;
-            font-weight: 600;
-        }
-        
-        .parameters {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 6px;
-        }
-        
-        .param-item {
+        .data-management {
             display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
+            gap: 10px;
+            margin-top: 20px;
         }
         
-        .param-label {
-            font-weight: 600;
+        .data-management button {
+            flex: 1;
+            margin-top: 0;
         }
         
-        .param-value {
-            color: #2c3e50;
+        .reset-btn {
+            background-color: #e74c3c;
+        }
+        
+        .reset-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .save-btn {
+            background-color: #2ecc71;
+        }
+        
+        .save-btn:hover {
+            background-color: #27ae60;
         }
         
         footer {
             text-align: center;
-            margin-top: 40px;
-            color: #95a5a6;
-            font-size: 14px;
+            margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .btn-secondary {
-            background-color: #95a5a6;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #7f8c8d;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+            font-size: 0.9rem;
         }
         
         @media (max-width: 768px) {
-            .container {
-                gap: 20px;
+            .main-content {
+                flex-direction: column;
             }
             
-            .card {
-                padding: 20px;
-            }
-            
-            .consumption-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-            
-            .parameters {
-                grid-template-columns: 1fr;
+            .daily-inputs {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Калькулятор поставок жидкого азота</h1>
-        <p class="description">Расчет сроков поставки жидкого азота на производственный комплекс</p>
-    </header>
-    
     <div class="container">
-        <div class="card">
-            <h2>Текущие параметры системы</h2>
-            <div class="parameters">
-                <div class="param-item">
-                    <span class="param-label">Минимальный уровень:</span>
-                    <span class="param-value">30%</span>
+        <header>
+            <h1>Калькулятор поставок жидкого азота</h1>
+            <p class="description">Расчет даты следующей поставки жидкого азота на комплекс</p>
+        </header>
+        
+        <div class="main-content">
+            <section class="input-section">
+                <h2 class="section-title">Исходные данные</h2>
+                
+                <div class="form-group">
+                    <label for="currentLevel">Текущий уровень в емкости (%)</label>
+                    <input type="number" id="currentLevel" min="0" max="100" step="0.1" placeholder="Введите текущий уровень">
                 </div>
-                <div class="param-item">
-                    <span class="param-label">Максимальный уровень:</span>
-                    <span class="param-value">90%</span>
+                
+                <div class="form-group">
+                    <label for="deliveryDays">Дни доставки (дней)</label>
+                    <input type="number" id="deliveryDays" min="0" step="1" placeholder="Введите количество дней доставки">
                 </div>
-                <div class="param-item">
-                    <span class="param-label">Объем заказа:</span>
-                    <span class="param-value">45%</span>
+                
+                <div class="form-group">
+                    <label for="orderVolume">Объем заказа (% к текущему уровню)</label>
+                    <input type="number" id="orderVolume" value="45" min="0" max="100" step="0.1" placeholder="Введите объем заказа">
+                    <p class="info-text">По умолчанию: 45% к текущему уровню</p>
                 </div>
-            </div>
+                
+                <div class="form-group">
+                    <label>Уровень азота за последние 7 дней (%)</label>
+                    <div class="daily-inputs">
+                        <div class="daily-input">
+                            <label for="day7">7 дней назад</label>
+                            <input type="number" id="day7" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                        <div class="daily-input">
+                            <label for="day6">6 дней назад</label>
+                            <input type="number" id="day6" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                        <div class="daily-input">
+                            <label for="day5">5 дней назад</label>
+                            <input type="number" id="day5" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                        <div class="daily-input">
+                            <label for="day4">4 дня назад</label>
+                            <input type="number" id="day4" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                        <div class="daily-input">
+                            <label for="day3">3 дня назад</label>
+                            <input type="number" id="day3" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                        <div class="daily-input">
+                            <label for="day2">2 дня назад</label>
+                            <input type="number" id="day2" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                        <div class="daily-input">
+                            <label for="day1">1 день назад</label>
+                            <input type="number" id="day1" min="0" max="100" step="0.1" placeholder="0-100%">
+                        </div>
+                    </div>
+                    <p class="info-text">Введите данные об уровне азота за последние 7 дней</p>
+                </div>
+                
+                <button id="calculateBtn">Рассчитать поставку</button>
+                
+                <div class="data-management">
+                    <button id="saveDataBtn" class="save-btn">Сохранить данные</button>
+                    <button id="resetDataBtn" class="reset-btn">Сбросить данные</button>
+                </div>
+            </section>
+            
+            <section class="results-section">
+                <h2 class="section-title">Результаты расчета</h2>
+                
+                <div class="result-item">
+                    <div class="result-title">Средняя скорость потребления</div>
+                    <div id="consumptionRate" class="result-value">-</div>
+                    <p class="info-text">Рассчитано на основе данных за 7 дней</p>
+                </div>
+                
+                <div class="result-item">
+                    <div class="result-title">Объем заказа</div>
+                    <div id="orderResult" class="result-value">-</div>
+                    <p class="info-text">Рассчитано как <span id="orderPercent">45</span>% от текущего уровня</p>
+                </div>
+                
+                <div class="result-item">
+                    <div class="result-title">До следующей поставки осталось</div>
+                    <div id="daysToDelivery" class="result-value highlight">-</div>
+                    <p class="info-text">Дней до достижения минимального уровня (30%)</p>
+                </div>
+                
+                <div class="result-item">
+                    <div class="result-title">Рекомендуемая дата заказа</div>
+                    <div id="orderDate" class="result-value highlight">-</div>
+                    <p class="info-text">Дата, когда необходимо сделать заказ с учетом дней доставки</p>
+                </div>
+                
+                <div class="result-item">
+                    <div class="result-title">Дата следующей поставки</div>
+                    <div id="deliveryDate" class="result-value highlight">-</div>
+                    <p class="info-text">Ожидаемая дата прибытия поставки</p>
+                </div>
+                
+                <div class="info-text" style="margin-top: 30px;">
+                    <p><strong>Параметры системы:</strong></p>
+                    <p>• Минимальный уровень в емкости: 30%</p>
+                    <p>• Максимальный уровень в емкости: 90%</p>
+                    <p>• Формула расчета: (Текущий уровень - Минимальный остаток) / Средняя скорость потребления - Дни доставки</p>
+                </div>
+            </section>
         </div>
         
-        <div class="card">
-            <h2>Ввод данных</h2>
-            
-            <div class="input-group">
-                <label for="current-level">Текущий уровень азота в емкости (%)</label>
-                <input type="number" id="current-level" min="0" max="100" step="0.1" placeholder="Введите текущий уровень (0-100%)">
-            </div>
-            
-            <div class="input-group">
-                <label for="delivery-days">Дни доставки (срок поставки от заказа до прибытия)</label>
-                <input type="number" id="delivery-days" min="0" max="30" step="0.5" placeholder="Введите количество дней">
-            </div>
-            
-            <div class="input-group">
-                <label>Потребление азота за последние 7 дней (%)</label>
-                <p style="margin-bottom: 10px; color: #7f8c8d; font-size: 14px;">Укажите процентное потребление от общего объема емкости за каждый день</p>
-                <div class="consumption-grid" id="consumption-grid">
-                    <!-- Динамически заполняется через JavaScript -->
-                </div>
-            </div>
-            
-            <div class="buttons">
-                <button id="calculate-btn">Рассчитать поставку</button>
-                <button id="clear-data-btn" class="btn-secondary">Очистить сохраненные данные</button>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Результаты расчета</h2>
-            <div id="results-container">
-                <p style="color: #95a5a6; text-align: center;">Введите данные и нажмите "Рассчитать поставку"</p>
-            </div>
-        </div>
+        <footer>
+            <p>Калькулятор поставок жидкого азота | Данные сохраняются в локальном хранилище браузера</p>
+        </footer>
     </div>
-    
-    <footer>
-        <p>Система расчета поставок жидкого азота | Производственный комплекс</p>
-        <p>Данные сохраняются в вашем браузере</p>
-    </footer>
 
     <script src="app.js"></script>
 </body>
