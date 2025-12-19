@@ -13,11 +13,9 @@ const dailyInputsContainer = document.getElementById('dailyInputsContainer');
 
 // Элементы для отображения результатов
 const consumptionRateElement = document.getElementById('consumptionRate');
-const orderResultElement = document.getElementById('orderResult');
 const daysToDeliveryElement = document.getElementById('daysToDelivery');
 const orderDateElement = document.getElementById('orderDate');
 const deliveryDateElement = document.getElementById('deliveryDate');
-const orderPercentElement = document.getElementById('orderPercent');
 
 // Загрузка данных из localStorage при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
@@ -33,35 +31,36 @@ document.addEventListener('DOMContentLoaded', function() {
     orderVolumeInput.addEventListener('change', saveData);
 });
 
-// Инициализация полей с датами
+// Инициализация полей с датами (теперь только 6 дней, без текущей даты)
 function initializeDateInputs() {
     if (!dailyInputsContainer) return;
     
     // Очищаем контейнер
     dailyInputsContainer.innerHTML = '';
     
-    // Создаем поля для последних 7 дней
-    for (let i = 0; i < 7; i++) {
+    // Создаем поля для последних 6 дней (без текущего дня)
+    for (let i = 1; i <= 6; i++) {
         const date = new Date();
-        date.setDate(date.getDate() - (6 - i)); // От 6 дней назад до сегодня
+        date.setDate(date.getDate() - i); // От 1 до 6 дней назад
         
         const dayInput = document.createElement('div');
         dayInput.className = 'daily-input';
         
         const dateStr = formatDateForInput(date);
-        const displayDateStr = formatDateForDisplay(date);
         
+        // Без подписи, только поле выбора даты и поле ввода уровня
         dayInput.innerHTML = `
-            <label for="date${i+1}">${displayDateStr}</label>
-            <input type="date" id="date${i+1}" class="date-input" value="${dateStr}">
-            <input type="number" id="day${i+1}" class="level-input" min="0" max="100" step="0.1" placeholder="0-100%">
+            <div class="compact-input-group">
+                <input type="date" id="date${i}" class="date-input" value="${dateStr}">
+                <input type="number" id="day${i}" class="level-input" min="0" max="100" step="0.1" placeholder="Уровень %">
+            </div>
         `;
         
         dailyInputsContainer.appendChild(dayInput);
         
         // Добавляем обработчики для сохранения данных
-        const dateInput = document.getElementById(`date${i+1}`);
-        const levelInput = document.getElementById(`day${i+1}`);
+        const dateInput = document.getElementById(`date${i}`);
+        const levelInput = document.getElementById(`day${i}`);
         
         if (dateInput) {
             dateInput.addEventListener('change', saveData);
@@ -81,20 +80,14 @@ function formatDateForInput(date) {
     return `${year}-${month}-${day}`;
 }
 
-// Форматирование даты для отображения
-function formatDateForDisplay(date) {
-    const options = { weekday: 'short', day: 'numeric', month: 'short' };
-    return date.toLocaleDateString('ru-RU', options);
-}
-
 // Функция загрузки сохраненных данных
 function loadSavedData() {
     if (localStorage.getItem('nitrogenData')) {
         try {
             const savedData = JSON.parse(localStorage.getItem('nitrogenData'));
             
-            // Загружаем данные за 7 дней
-            for (let i = 1; i <= 7; i++) {
+            // Загружаем данные за 6 дней
+            for (let i = 1; i <= 6; i++) {
                 const levelInput = document.getElementById(`day${i}`);
                 const dateInput = document.getElementById(`date${i}`);
                 
@@ -112,7 +105,6 @@ function loadSavedData() {
             if (savedData.deliveryDays !== undefined) deliveryDaysInput.value = savedData.deliveryDays;
             if (savedData.orderVolume !== undefined) {
                 orderVolumeInput.value = savedData.orderVolume;
-                orderPercentElement.textContent = savedData.orderVolume;
             }
             
             console.log('Данные успешно загружены из localStorage');
@@ -131,8 +123,8 @@ function saveData() {
     const dailyLevels = [];
     const dailyDates = [];
     
-    // Собираем данные за 7 дней
-    for (let i = 1; i <= 7; i++) {
+    // Собираем данные за 6 дней
+    for (let i = 1; i <= 6; i++) {
         const levelInput = document.getElementById(`day${i}`);
         const dateInput = document.getElementById(`date${i}`);
         
@@ -141,7 +133,7 @@ function saveData() {
         }
         
         if (dateInput) {
-            dailyDates.push(dateInput.value || formatDateForInput(new Date(Date.now() - (7 - i) * 24 * 60 * 60 * 1000)));
+            dailyDates.push(dateInput.value || formatDateForInput(new Date(Date.now() - i * 24 * 60 * 60 * 1000)));
         }
     }
     
@@ -169,18 +161,16 @@ function saveData() {
 // Функция сброса данных
 function resetData() {
     if (confirm('Вы уверены, что хотите сбросить все данные? Это действие нельзя отменить.')) {
-        // Сбрасываем даты на последние 7 дней
+        // Сбрасываем даты на последние 6 дней
         initializeDateInputs();
         
         // Очищаем другие поля
         currentLevelInput.value = '';
         deliveryDaysInput.value = '';
         orderVolumeInput.value = '45';
-        orderPercentElement.textContent = '45';
         
         // Очищаем результаты
         consumptionRateElement.textContent = '-';
-        orderResultElement.textContent = '-';
         daysToDeliveryElement.textContent = '-';
         orderDateElement.textContent = '-';
         deliveryDateElement.textContent = '-';
@@ -196,8 +186,8 @@ function resetData() {
 function calculateConsumptionRate() {
     const levelData = [];
     
-    // Собираем данные об уровнях и датах
-    for (let i = 1; i <= 7; i++) {
+    // Собираем данные об уровнях и датах за 6 дней
+    for (let i = 1; i <= 6; i++) {
         const levelInput = document.getElementById(`day${i}`);
         const dateInput = document.getElementById(`date${i}`);
         
@@ -266,14 +256,8 @@ function calculateDelivery() {
         return;
     }
     
-    // Обновляем отображаемый процент заказа
-    orderPercentElement.textContent = orderVolumePercent;
-    
     // Рассчитываем среднюю скорость потребления
     const avgConsumption = calculateConsumptionRate();
-    
-    // Рассчитываем объем заказа
-    const orderVolume = (currentLevel * orderVolumePercent) / 100;
     
     // Рассчитываем, через сколько дней достигнем минимального уровня
     let daysToMinLevel = 0;
@@ -325,8 +309,6 @@ function calculateDelivery() {
         orderDateElement.textContent = 'Недостаточно данных';
         deliveryDateElement.textContent = 'Недостаточно данных';
     }
-    
-    orderResultElement.textContent = `${orderVolume.toFixed(1)}%`;
     
     // Автоматически сохраняем данные после расчета
     saveData();
