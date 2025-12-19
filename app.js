@@ -9,6 +9,7 @@ const orderVolumeInput = document.getElementById('orderVolume');
 const calculateBtn = document.getElementById('calculateBtn');
 const saveDataBtn = document.getElementById('saveDataBtn');
 const resetDataBtn = document.getElementById('resetDataBtn');
+const dailyInputsContainer = document.getElementById('dailyInputsContainer');
 
 // Элементы для отображения результатов
 const consumptionRateElement = document.getElementById('consumptionRate');
@@ -18,37 +19,15 @@ const orderDateElement = document.getElementById('orderDate');
 const deliveryDateElement = document.getElementById('deliveryDate');
 const orderPercentElement = document.getElementById('orderPercent');
 
-// Массив для хранения элементов полей ввода за 7 дней
-const dailyInputs = [];
-const dailyDateInputs = [];
-for (let i = 1; i <= 7; i++) {
-    dailyInputs.push(document.getElementById(`day${i}`));
-    // Создаем поля для дат
-    const dateInputId = `date${i}`;
-    dailyDateInputs.push(dateInputId);
-}
-
 // Загрузка данных из localStorage при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDateInputs(); // Инициализация дат
+    initializeDateInputs(); // Инициализация полей с датами
     loadSavedData();
     calculateBtn.addEventListener('click', calculateDelivery);
     saveDataBtn.addEventListener('click', saveData);
     resetDataBtn.addEventListener('click', resetData);
     
     // Автоматически сохраняем данные при изменении
-    dailyInputs.forEach(input => {
-        input.addEventListener('change', saveData);
-    });
-    
-    // Добавляем обработчики для полей дат
-    dailyDateInputs.forEach(dateId => {
-        const input = document.getElementById(dateId);
-        if (input) {
-            input.addEventListener('change', saveData);
-        }
-    });
-    
     currentLevelInput.addEventListener('change', saveData);
     deliveryDaysInput.addEventListener('change', saveData);
     orderVolumeInput.addEventListener('change', saveData);
@@ -56,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Инициализация полей с датами
 function initializeDateInputs() {
-    const dailyInputsContainer = document.querySelector('.daily-inputs');
     if (!dailyInputsContainer) return;
     
     // Очищаем контейнер
@@ -75,11 +53,23 @@ function initializeDateInputs() {
         
         dayInput.innerHTML = `
             <label for="date${i+1}">${displayDateStr}</label>
-            <input type="date" id="date${i+1}" value="${dateStr}">
-            <input type="number" id="day${i+1}" min="0" max="100" step="0.1" placeholder="0-100%" style="margin-top: 5px;">
+            <input type="date" id="date${i+1}" class="date-input" value="${dateStr}">
+            <input type="number" id="day${i+1}" class="level-input" min="0" max="100" step="0.1" placeholder="0-100%">
         `;
         
         dailyInputsContainer.appendChild(dayInput);
+        
+        // Добавляем обработчики для сохранения данных
+        const dateInput = document.getElementById(`date${i+1}`);
+        const levelInput = document.getElementById(`day${i+1}`);
+        
+        if (dateInput) {
+            dateInput.addEventListener('change', saveData);
+        }
+        
+        if (levelInput) {
+            levelInput.addEventListener('change', saveData);
+        }
     }
 }
 
@@ -104,19 +94,18 @@ function loadSavedData() {
             const savedData = JSON.parse(localStorage.getItem('nitrogenData'));
             
             // Загружаем данные за 7 дней
-            dailyInputs.forEach((input, index) => {
-                if (savedData.dailyLevels && savedData.dailyLevels[index] !== undefined) {
-                    input.value = savedData.dailyLevels[index];
+            for (let i = 1; i <= 7; i++) {
+                const levelInput = document.getElementById(`day${i}`);
+                const dateInput = document.getElementById(`date${i}`);
+                
+                if (levelInput && savedData.dailyLevels && savedData.dailyLevels[i-1] !== undefined) {
+                    levelInput.value = savedData.dailyLevels[i-1];
                 }
-            });
-            
-            // Загружаем даты
-            dailyDateInputs.forEach((dateId, index) => {
-                const input = document.getElementById(dateId);
-                if (input && savedData.dailyDates && savedData.dailyDates[index]) {
-                    input.value = savedData.dailyDates[index];
+                
+                if (dateInput && savedData.dailyDates && savedData.dailyDates[i-1]) {
+                    dateInput.value = savedData.dailyDates[i-1];
                 }
-            });
+            }
             
             // Загружаем другие данные
             if (savedData.currentLevel !== undefined) currentLevelInput.value = savedData.currentLevel;
@@ -180,9 +169,6 @@ function saveData() {
 // Функция сброса данных
 function resetData() {
     if (confirm('Вы уверены, что хотите сбросить все данные? Это действие нельзя отменить.')) {
-        // Очищаем поля ввода уровней
-        dailyInputs.forEach(input => input.value = '');
-        
         // Сбрасываем даты на последние 7 дней
         initializeDateInputs();
         
@@ -206,7 +192,7 @@ function resetData() {
     }
 }
 
-// Функция расчета средней скорости потребления (ИСПРАВЛЕННАЯ)
+// Функция расчета средней скорости потребления
 function calculateConsumptionRate() {
     const levelData = [];
     
@@ -283,7 +269,7 @@ function calculateDelivery() {
     // Обновляем отображаемый процент заказа
     orderPercentElement.textContent = orderVolumePercent;
     
-    // Рассчитываем среднюю скорость потребления (ИСПРАВЛЕННЫЙ РАСЧЕТ)
+    // Рассчитываем среднюю скорость потребления
     const avgConsumption = calculateConsumptionRate();
     
     // Рассчитываем объем заказа
