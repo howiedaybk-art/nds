@@ -14,7 +14,7 @@
             padding-bottom: 50px;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
         }
         .card {
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
@@ -37,27 +37,42 @@
             background-color: #d1e7dd !important;
             border-left: 4px solid #198754 !important;
         }
-        .consumption-history {
-            max-height: 400px;
-            overflow-y: auto;
+        .day-input {
+            transition: all 0.3s;
+            border-left: 4px solid #dee2e6;
         }
-        .form-label {
-            font-weight: 500;
+        .day-input.filled {
+            border-left-color: #198754;
+            background-color: rgba(25, 135, 84, 0.05);
         }
-        .level-indicator {
-            width: 100%;
-            height: 25px;
-            background: linear-gradient(to right, #dc3545, #ffc107, #198754);
-            border-radius: 5px;
-            margin-top: 10px;
-            position: relative;
+        .day-input.empty {
+            border-left-color: #6c757d;
+            background-color: rgba(108, 117, 125, 0.05);
         }
-        .level-marker {
+        .day-input.invalid {
+            border-left-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.05);
+        }
+        .date-header {
+            font-weight: 600;
+            color: #495057;
+        }
+        .completion-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .capacity-marker {
             position: absolute;
-            top: -5px;
-            width: 3px;
-            height: 35px;
-            background-color: #000;
+            height: 100%;
+            width: 2px;
+            background-color: rgba(0,0,0,0.2);
+        }
+        .capacity-label {
+            position: absolute;
+            bottom: -25px;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            white-space: nowrap;
         }
         .tank-visual {
             width: 100px;
@@ -67,7 +82,7 @@
             position: relative;
             overflow: hidden;
             margin: 0 auto;
-            background: linear-gradient(to top, #4dabf7, #228be6);
+            background: linear-gradient(to top, #e9ecef, #dee2e6);
         }
         .tank-level {
             position: absolute;
@@ -83,193 +98,190 @@
             font-weight: bold;
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            top: 50%;
+            transform: translateY(-50%);
         }
-        .capacity-marker {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background-color: rgba(255,255,255,0.5);
+        .calculation-table {
+            font-size: 0.9rem;
+        }
+        .calculation-table th {
+            font-weight: 600;
+            background-color: #f8f9fa;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="text-center mb-5">
-            <h1 class="display-5"><i class="bi bi-thermometer-snow"></i> Калькулятор поставок жидкого азота</h1>
-            <p class="lead text-muted">Автоматический расчет на основе данных за 7 дней</p>
+        <header class="text-center mb-4">
+            <h1 class="display-5 mb-3"><i class="bi bi-thermometer-snow"></i> Калькулятор поставок жидкого азота</h1>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="alert alert-info py-2">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Минимум:</strong> <span class="badge bg-warning">30%</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Заказ:</strong> <span class="badge bg-success">45%</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Максимум:</strong> <span class="badge bg-primary">90%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <div class="row">
+            <!-- Левая колонка: Ввод данных -->
             <div class="col-lg-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-droplet"></i> Текущее состояние</h5>
-                        <div class="tank-visual" id="tankVisual">
-                            <div class="tank-level" id="tankLevel" style="height: 50%;">
-                                <div class="tank-label" id="tankLabel">50%</div>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Ввод данных за 7 дней</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Заполните уровень азота за последние 7 дней:</h6>
+                                <span id="completionBadge" class="badge bg-secondary">0/7 заполнено</span>
                             </div>
-                            <div class="capacity-marker" style="bottom: 10%;" title="Мин. остаток 30%"></div>
-                            <div class="capacity-marker" style="bottom: 90%;" title="Макс. уровень 90%"></div>
+                            
+                            <form id="nitrogenForm">
+                                <div id="daysInputsContainer">
+                                    <!-- 7 полей будут сгенерированы JavaScript -->
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="deliveryDays" class="form-label">
+                                        <i class="bi bi-truck"></i> Дни на доставку
+                                    </label>
+                                    <input type="number" class="form-control" id="deliveryDays" value="2" min="1" max="10" required>
+                                    <div class="form-text">Сколько дней занимает поставка после заказа</div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-calculator"></i> Рассчитать поставку
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="clearAllData()">
+                                        <i class="bi bi-eraser"></i> Очистить все данные
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <form id="nitrogenForm">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="mb-3">
-                                        <label for="currentLevel" class="form-label">Текущий уровень (%)</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="currentLevel" min="0" max="100" step="0.1" required>
-                                            <button class="btn btn-outline-secondary" type="button" onclick="setLevelTo90()">90%</button>
+                        
+                        <!-- Визуализация емкости -->
+                        <div class="mt-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-droplet"></i> Визуализация емкости</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="tank-visual" id="tankVisual">
+                                                <div class="tank-level" id="tankLevel">
+                                                    <div class="tank-label">0%</div>
+                                                </div>
+                                                <!-- Маркеры -->
+                                                <div class="capacity-marker" style="left: 0; bottom: 30%;" title="Мин. 30%"></div>
+                                                <div class="capacity-marker" style="left: 0; bottom: 90%;" title="Макс. 90%"></div>
+                                            </div>
                                         </div>
-                                        <div class="form-text">После заправки устанавливайте 90% (максимальный безопасный уровень)</div>
-                                        
-                                        <div class="level-indicator mt-2">
-                                            <div class="level-marker" style="left: 30%;" title="Минимальный остаток 30%"></div>
-                                            <div class="level-marker" style="left: 90%;" title="Максимальный уровень 90%"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between mt-1">
-                                            <small>0%</small>
-                                            <small>30% (мин.)</small>
-                                            <small>90% (макс.)</small>
-                                            <small>100%</small>
+                                        <div class="col-md-6">
+                                            <div class="mt-3">
+                                                <h6>Параметры:</h6>
+                                                <ul class="list-unstyled">
+                                                    <li class="mb-2">
+                                                        <span class="badge bg-warning">30%</span> Минимальный остаток
+                                                    </li>
+                                                    <li class="mb-2">
+                                                        <span class="badge bg-success">45%</span> Объем заказа
+                                                    </li>
+                                                    <li class="mb-2">
+                                                        <span class="badge bg-primary">90%</span> Максимум после заправки
+                                                    </li>
+                                                    <li class="mb-2">
+                                                        <span class="badge bg-info" id="currentLevelBadge">0%</span> Текущий уровень
+                                                    </li>
+                                                </ul>
+                                                <div class="mt-3">
+                                                    <button class="btn btn-sm btn-outline-primary w-100" onclick="fillSampleData()">
+                                                        <i class="bi bi-magic"></i> Заполнить тестовыми данными
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label class="form-label">Дата замера</label>
-                                        <input type="date" class="form-control" id="measurementDate" required>
-                                        <div class="form-text">Дата, на которую актуален уровень</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="alert alert-info">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6><i class="bi bi-calculator"></i> Рассчитанные параметры:</h6>
-                                        <div class="mb-2">
-                                            <strong>Скорость потребления:</strong>
-                                            <span id="calculatedRate" class="badge bg-info">0.00 %/день</span>
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>Дней данных:</strong>
-                                            <span id="daysCount" class="badge bg-secondary">0 из 7</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-2">
-                                            <strong>Минимальный остаток:</strong>
-                                            <span class="badge bg-warning">30% (фиксировано)</span>
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>Объем заказа:</strong>
-                                            <span class="badge bg-success">45% (фиксировано)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="deliveryDays" class="form-label">Дни на доставку</label>
-                                <input type="number" class="form-control" id="deliveryDays" value="2" min="1" max="10" required>
-                                <div class="form-text">Сколько дней занимает поставка после заказа</div>
-                            </div>
-                            
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-save"></i> Сохранить замер и рассчитать
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="calculateFromHistory()">
-                                    <i class="bi bi-calculator"></i> Рассчитать по истории
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Быстрый ввод</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-3">
-                                <button class="btn btn-outline-primary w-100 mb-2" onclick="setQuickLevel(90)">90%</button>
-                                <small class="text-muted">После заправки</small>
-                            </div>
-                            <div class="col-3">
-                                <button class="btn btn-outline-warning w-100 mb-2" onclick="setQuickLevel(60)">60%</button>
-                                <small class="text-muted">Средний</small>
-                            </div>
-                            <div class="col-3">
-                                <button class="btn btn-outline-danger w-100 mb-2" onclick="setQuickLevel(40)">40%</button>
-                                <small class="text-muted">Пора заказывать</small>
-                            </div>
-                            <div class="col-3">
-                                <button class="btn btn-outline-dark w-100 mb-2" onclick="setQuickLevel(30)">30%</button>
-                                <small class="text-muted">Минимум</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             
+            <!-- Правая колонка: Результаты -->
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Результаты расчета</h5>
+                        <h5 class="mb-0"><i class="bi bi-graph-up"></i> Результаты расчета</h5>
                     </div>
                     <div class="card-body">
-                        <div id="result" class="text-center py-4">
-                            <p class="text-muted">Добавьте данные за 7 дней для расчета</p>
+                        <div id="resultContainer">
+                            <div class="text-center py-5">
+                                <i class="bi bi-calculator display-4 text-muted mb-3"></i>
+                                <p class="text-muted">Заполните данные за 7 дней и нажмите "Рассчитать"</p>
+                            </div>
                         </div>
                         
+                        <!-- График -->
                         <div class="mt-4">
-                            <canvas id="consumptionChart"></canvas>
+                            <canvas id="consumptionChart" height="200"></canvas>
+                        </div>
+                        
+                        <!-- Детальный расчет -->
+                        <div class="mt-4" id="calculationDetails" style="display: none;">
+                            <h6><i class="bi bi-table"></i> Детали расчета</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm calculation-table">
+                                    <thead>
+                                        <tr>
+                                            <th>День</th>
+                                            <th>Уровень</th>
+                                            <th>Изменение</th>
+                                            <th>Расход/день</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="calculationTable">
+                                        <!-- Данные будут добавлены здесь -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> История замеров (7 дней)</h5>
-                        <div>
-                            <span class="badge bg-info me-2" id="historyCount">0 записей</span>
-                            <button class="btn btn-sm btn-outline-danger" onclick="clearHistory()" title="Очистить историю">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
+                <!-- Информация -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Как это работает</h6>
                     </div>
                     <div class="card-body">
-                        <div class="consumption-history">
-                            <table class="table table-sm table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Дата</th>
-                                        <th>Уровень</th>
-                                        <th>Изменение</th>
-                                        <th>Дней назад</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="historyTable">
-                                    <!-- История будет загружена здесь -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="alert alert-warning mt-2" id="historyWarning">
-                            <i class="bi bi-info-circle"></i> Для точного расчета скорости добавьте замеры за 7 дней
-                        </div>
+                        <ol class="mb-0">
+                            <li>Заполните уровень азота за каждый из последних 7 дней</li>
+                            <li>Система рассчитает среднюю скорость потребления</li>
+                            <li>На основе текущего уровня и скорости будет рассчитана дата заказа</li>
+                            <li>Заказывать нужно, когда до минимума (30%) останется столько же дней, сколько занимает доставка</li>
+                            <li>После заправки уровень не должен превышать 90%</li>
+                        </ol>
                     </div>
                 </div>
             </div>
         </div>
         
         <footer class="mt-5 text-center text-muted">
-            <p>© 2024 Калькулятор поставок жидкого азота. Данные сохраняются локально в вашем браузере.</p>
-            <small>Максимальный уровень после заправки: 90% | Минимальный остаток: 30% | Объем заказа: 45%</small>
+            <p>© 2024 Калькулятор поставок жидкого азота | Данные хранятся локально в вашем браузере</p>
         </footer>
     </div>
 
