@@ -1,23 +1,67 @@
-<div id="calculator">
-  <h3>Калькулятор стоимости</h3>
-  <input type="number" id="qty" placeholder="Количество">
-  <input type="number" id="price" placeholder="Цена без НДС">
-  <button onclick="calc()">Посчитать</button>
-  <div id="result"></div>
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Калькулятор стоимости договора</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 40px auto; }
+        .calculator { background: #f5f5f5; padding: 20px; border-radius: 10px; }
+        input, button { padding: 8px; margin: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .totals { background: #e3f2fd; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🧮 Калькулятор стоимости договора</h2>
+        
+        <div>
+            <label>Количество товара:</label>
+            <input type="number" id="quantity" placeholder="Введите количество">
+        </div>
+        
+        <div>
+            <label>Цена без НДС (руб):</label>
+            <input type="number" id="price" placeholder="Введите цену">
+        </div>
+        
+        <button onclick="calculate()">Рассчитать</button>
+        
+        <table>
+            <tr>
+                <th>Стоимость без НДС</th>
+                <th>НДС (22%)</th>
+                <th>Стоимость с НДС</th>
+            </tr>
+            <tr class="totals">
+                <td id="totalWithoutVAT">0</td>
+                <td id="vatAmount">0</td>
+                <td id="totalWithVAT">0</td>
+            </tr>
+        </table>
+    </div>
 
-<script>
-function calc() {
-  const qty = document.getElementById('qty').value;
-  const price = document.getElementById('price').value;
-  const sum = qty * price;
-  const vat = sum * 0.22;
-  const total = sum + vat;
-  
-  document.getElementById('result').innerHTML = `
-    <p>Без НДС: ${sum.toFixed(2)} руб</p>
-    <p>НДС 22%: ${vat.toFixed(2)} руб</p>
-    <p><b>С НДС: ${total.toFixed(2)} руб</b></p>
-  `;
-}
-</script>
+    <script>
+    function calculate() {
+        const quantity = parseFloat(document.getElementById('quantity').value);
+        const price = parseFloat(document.getElementById('price').value);
+        
+        if (!quantity || !price) {
+            alert('Заполните оба поля!');
+            return;
+        }
+        
+        const totalWithoutVAT = quantity * price;
+        const vat = totalWithoutVAT * 0.22;
+        const totalWithVAT = totalWithoutVAT + vat;
+        
+        document.getElementById('totalWithoutVAT').textContent = 
+            totalWithoutVAT.toFixed(2) + ' руб';
+        document.getElementById('vatAmount').textContent = 
+            vat.toFixed(2) + ' руб';
+        document.getElementById('totalWithVAT').textContent = 
+            totalWithVAT.toFixed(2) + ' руб';
+    }
+    </script>
+</body>
+</html>
