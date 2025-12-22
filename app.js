@@ -1,225 +1,291 @@
+// Константа НДС
+const VAT_RATE = 0.22; // 22%
+
+// Глобальные переменные для хранения данных
+let rowCount = 0;
+let contractsData = [];
+
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация приложения
-    initApp();
+    // Добавляем первую строку по умолчанию
+    addRow();
     
-    function initApp() {
-        // Создаем первую строку при загрузке
-        addNewRow();
-        
-        // Назначаем обработчики событий
-        document.getElementById('addRow').addEventListener('click', addNewRow);
-        document.getElementById('calculateTotals').addEventListener('click', calculateTotals);
-        document.getElementById('clearAll').addEventListener('click', clearAll);
-        
-        // Назначаем делегирование событий для динамически созданных элементов
-        document.getElementById('tableBody').addEventListener('input', handleInputChange);
-        document.getElementById('tableBody').addEventListener('click', handleDeleteClick);
-    }
-    
-    // Добавление новой строки в таблицу
-    function addNewRow() {
-        const tableBody = document.getElementById('tableBody');
-        const rowNumber = tableBody.querySelectorAll('tr').length + 1;
-        
-        // Создаем новую строку
-        const newRow = document.createElement('tr');
-        
-        newRow.innerHTML = `
-            <td>
-                <span class="row-number">${rowNumber}</span>
-            </td>
-            <td>
-                <input type="text" class="product-name" placeholder="Введите наименование">
-            </td>
-            <td>
-                <input type="number" class="quantity" placeholder="0" min="0" step="1">
-            </td>
-            <td>
-                <input type="number" class="price-without-vat" placeholder="0.00" min="0" step="0.01">
-            </td>
-            <td class="result-cell unit-price-with-vat">0.00</td>
-            <td class="result-cell total-without-vat">0.00</td>
-            <td class="result-cell vat-amount">0.00</td>
-            <td class="result-cell total-with-vat">0.00</td>
-            <td>
-                <button class="delete-row" title="Удалить строку">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        
-        tableBody.appendChild(newRow);
-        
-        // Прокручиваем к новой строке
-        newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    
-    // Обработка изменения ввода в таблице
-    function handleInputChange(event) {
-        const target = event.target;
-        
-        // Проверяем, является ли элемент полем ввода количества или цены
-        if (target.classList.contains('quantity') || target.classList.contains('price-without-vat')) {
-            // Получаем родительскую строку
-            const row = target.closest('tr');
-            calculateRow(row);
+    // Устанавливаем обработчики событий для уже существующих элементов
+    document.addEventListener('input', function(event) {
+        if (event.target.classList.contains('quantity') || event.target.classList.contains('price')) {
+            const rowIndex = parseInt(event.target.closest('tr').dataset.index);
+            calculateRow(rowIndex);
+            updateTotals();
         }
-    }
-    
-    // Расчет значений для строки
-    function calculateRow(row) {
-        // Получаем значения из полей ввода
-        const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
-        const priceWithoutVAT = parseFloat(row.querySelector('.price-without-vat').value) || 0;
-        
-        // Выполняем расчеты
-        const unitPriceWithVAT = priceWithoutVAT * 1.22; // Цена с НДС
-        const totalWithoutVAT = quantity * priceWithoutVAT; // Стоимость без НДС
-        const vatAmount = totalWithoutVAT * 0.22; // Сумма НДС
-        const totalWithVAT = totalWithoutVAT + vatAmount; // Стоимость с НДС
-        
-        // Обновляем ячейки с результатами
-        row.querySelector('.unit-price-with-vat').textContent = formatCurrency(unitPriceWithVAT);
-        row.querySelector('.total-without-vat').textContent = formatCurrency(totalWithoutVAT);
-        row.querySelector('.vat-amount').textContent = formatCurrency(vatAmount);
-        row.querySelector('.total-with-vat').textContent = formatCurrency(totalWithVAT);
-    }
-    
-    // Обработка удаления строки
-    function handleDeleteClick(event) {
-        const target = event.target;
-        
-        // Проверяем, была ли нажата кнопка удаления или ее дочерний элемент
-        const deleteBtn = target.closest('.delete-row');
-        if (deleteBtn) {
-            const row = deleteBtn.closest('tr');
-            const tableBody = document.getElementById('tableBody');
-            const rows = tableBody.querySelectorAll('tr');
-            
-            // Не позволяем удалить последнюю строку
-            if (rows.length > 1) {
-                row.remove();
-                updateRowNumbers(); // Обновляем номера строк
-            } else {
-                alert('Должна остаться хотя бы одна строка для расчета');
-            }
-        }
-    }
-    
-    // Обновление номеров строк
-    function updateRowNumbers() {
-        const rows = document.querySelectorAll('#tableBody tr');
-        rows.forEach((row, index) => {
-            const rowNumberCell = row.querySelector('.row-number');
-            if (rowNumberCell) {
-                rowNumberCell.textContent = index + 1;
-            }
-        });
-    }
-    
-    // Расчет итоговых сумм
-    function calculateTotals() {
-        const rows = document.querySelectorAll('#tableBody tr');
-        
-        let totalWithoutVAT = 0;
-        let totalVAT = 0;
-        let totalWithVAT = 0;
-        
-        // Суммируем значения из всех строк
-        rows.forEach(row => {
-            // Выполняем расчет для строки, если она еще не рассчитана
-            calculateRow(row);
-            
-            // Получаем рассчитанные значения
-            const rowTotalWithoutVAT = parseFloat(row.querySelector('.total-without-vat').textContent.replace(/\s/g, '')) || 0;
-            const rowVAT = parseFloat(row.querySelector('.vat-amount').textContent.replace(/\s/g, '')) || 0;
-            const rowTotalWithVAT = parseFloat(row.querySelector('.total-with-vat').textContent.replace(/\s/g, '')) || 0;
-            
-            // Суммируем
-            totalWithoutVAT += rowTotalWithoutVAT;
-            totalVAT += rowVAT;
-            totalWithVAT += rowTotalWithVAT;
-        });
-        
-        // Обновляем отображение итогов
-        document.getElementById('totalWithoutVAT').innerHTML = `${formatCurrency(totalWithoutVAT)} <span class="currency">₽</span>`;
-        document.getElementById('totalVAT').innerHTML = `${formatCurrency(totalVAT)} <span class="currency">₽</span>`;
-        document.getElementById('totalWithVAT').innerHTML = `${formatCurrency(totalWithVAT)} <span class="currency">₽</span>`;
-        
-        // Показываем уведомление о завершении расчета
-        showNotification(`Итоги рассчитаны: ${formatCurrency(totalWithVAT)} ₽`);
-    }
-    
-    // Очистка всех данных
-    function clearAll() {
-        if (confirm('Вы уверены, что хотите удалить все данные? Все строки будут очищены.')) {
-            const tableBody = document.getElementById('tableBody');
-            
-            // Удаляем все строки
-            tableBody.innerHTML = '';
-            
-            // Сбрасываем итоговые значения
-            document.getElementById('totalWithoutVAT').innerHTML = `0 <span class="currency">₽</span>`;
-            document.getElementById('totalVAT').innerHTML = `0 <span class="currency">₽</span>`;
-            document.getElementById('totalWithVAT').innerHTML = `0 <span class="currency">₽</span>`;
-            
-            // Добавляем первую строку
-            addNewRow();
-            
-            showNotification('Все данные очищены');
-        }
-    }
-    
-    // Форматирование денежных значений
-    function formatCurrency(value) {
-        // Округляем до 2 знаков после запятой
-        const roundedValue = Math.round(value * 100) / 100;
-        
-        // Форматируем с разделителями тысяч и 2 знаками после запятой
-        return roundedValue.toLocaleString('ru-RU', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-    
-    // Показать уведомление
-    function showNotification(message) {
-        // Создаем элемент уведомления
-        const notification = document.createElement('div');
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #27ae60;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
-            font-weight: 600;
-            animation: fadeInOut 3s ease-in-out;
-        `;
-        
-        // Добавляем стили анимации
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInOut {
-                0% { opacity: 0; transform: translateY(-20px); }
-                10% { opacity: 1; transform: translateY(0); }
-                90% { opacity: 1; transform: translateY(0); }
-                100% { opacity: 0; transform: translateY(-20px); }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Добавляем уведомление на страницу
-        document.body.appendChild(notification);
-        
-        // Удаляем уведомление через 3 секунды
-        setTimeout(() => {
-            notification.remove();
-            style.remove();
-        }, 3000);
-    }
+    });
 });
+
+// Функция для добавления новой строки в таблицу
+function addRow() {
+    const tableBody = document.getElementById('tableBody');
+    rowCount++;
+    
+    // Создаем новый объект для хранения данных строки
+    contractsData.push({
+        id: rowCount,
+        name: '',
+        quantity: 0,
+        priceWithoutVAT: 0,
+        priceWithVAT: 0,
+        vatAmount: 0,
+        totalWithVAT: 0
+    });
+    
+    // Создаем новую строку
+    const newRow = document.createElement('tr');
+    newRow.dataset.index = rowCount - 1; // Индекс в массиве
+    
+    newRow.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" class="product-name" placeholder="Введите наименование" value=""></td>
+        <td><input type="number" class="quantity" min="0" step="0.01" placeholder="0" value=""></td>
+        <td><input type="number" class="price" min="0" step="0.01" placeholder="0.00" value=""></td>
+        <td><div class="result" id="priceWithVAT-${rowCount}">0.00</div></td>
+        <td><div class="result" id="vatAmount-${rowCount}">0.00</div></td>
+        <td><div class="result" id="totalWithVAT-${rowCount}">0.00</div></td>
+        <td><button class="btn-delete" onclick="deleteRow(${rowCount - 1})" style="padding: 5px 10px; font-size: 12px;"><i class="fas fa-times"></i></button></td>
+    `;
+    
+    tableBody.appendChild(newRow);
+    
+    // Устанавливаем обработчики событий для новой строки
+    const quantityInput = newRow.querySelector('.quantity');
+    const priceInput = newRow.querySelector('.price');
+    const nameInput = newRow.querySelector('.product-name');
+    
+    quantityInput.addEventListener('input', function() {
+        const rowIndex = parseInt(this.closest('tr').dataset.index);
+        contractsData[rowIndex].quantity = parseFloat(this.value) || 0;
+        calculateRow(rowIndex);
+        updateTotals();
+    });
+    
+    priceInput.addEventListener('input', function() {
+        const rowIndex = parseInt(this.closest('tr').dataset.index);
+        contractsData[rowIndex].priceWithoutVAT = parseFloat(this.value) || 0;
+        calculateRow(rowIndex);
+        updateTotals();
+    });
+    
+    nameInput.addEventListener('input', function() {
+        const rowIndex = parseInt(this.closest('tr').dataset.index);
+        contractsData[rowIndex].name = this.value;
+    });
+    
+    // Первоначальный расчет для новой строки
+    calculateRow(rowCount - 1);
+    updateTotals();
+}
+
+// Функция для удаления строки по индексу
+function deleteRow(index) {
+    const tableBody = document.getElementById('tableBody');
+    const rows = tableBody.querySelectorAll('tr');
+    
+    if (rows.length > 1) {
+        // Удаляем строку из DOM
+        rows[index].remove();
+        
+        // Удаляем данные из массива
+        contractsData.splice(index, 1);
+        
+        // Обновляем индексы и номера строк
+        updateRowNumbers();
+        
+        // Пересчитываем итоги
+        updateTotals();
+    } else {
+        alert("Должна остаться хотя бы одна строка!");
+    }
+}
+
+// Функция для удаления последней строки
+function deleteLastRow() {
+    if (contractsData.length > 1) {
+        deleteRow(contractsData.length - 1);
+    } else {
+        alert("Должна остаться хотя бы одна строка!");
+    }
+}
+
+// Функция для обновления номеров строк после удаления
+function updateRowNumbers() {
+    const tableBody = document.getElementById('tableBody');
+    const rows = tableBody.querySelectorAll('tr');
+    
+    rowCount = rows.length;
+    
+    rows.forEach((row, index) => {
+        // Обновляем номер в первой ячейке
+        row.cells[0].textContent = index + 1;
+        
+        // Обновляем dataset индекс
+        row.dataset.index = index;
+        
+        // Обновляем ID в данных
+        contractsData[index].id = index + 1;
+        
+        // Обновляем ID элементов результатов
+        row.querySelector(`#priceWithVAT-${index + 2}`).id = `priceWithVAT-${index + 1}`;
+        row.querySelector(`#vatAmount-${index + 2}`).id = `vatAmount-${index + 1}`;
+        row.querySelector(`#totalWithVAT-${index + 2}`).id = `totalWithVAT-${index + 1}`;
+        
+        // Обновляем обработчик кнопки удаления
+        const deleteButton = row.querySelector('button');
+        deleteButton.onclick = function() { deleteRow(index); };
+    });
+}
+
+// Функция для расчета данных одной строки
+function calculateRow(rowIndex) {
+    if (rowIndex < 0 || rowIndex >= contractsData.length) return;
+    
+    const data = contractsData[rowIndex];
+    
+    // Расчет стоимости единицы с НДС
+    data.priceWithVAT = data.priceWithoutVAT * (1 + VAT_RATE);
+    
+    // Расчет НДС для единицы товара
+    data.vatPerUnit = data.priceWithoutVAT * VAT_RATE;
+    
+    // Расчет НДС для общего количества
+    data.vatAmount = data.vatPerUnit * data.quantity;
+    
+    // Расчет общей стоимости с НДС
+    data.totalWithVAT = data.priceWithVAT * data.quantity;
+    
+    // Обновление отображения в таблице
+    document.getElementById(`priceWithVAT-${data.id}`).textContent = formatCurrency(data.priceWithVAT);
+    document.getElementById(`vatAmount-${data.id}`).textContent = formatCurrency(data.vatAmount);
+    document.getElementById(`totalWithVAT-${data.id}`).textContent = formatCurrency(data.totalWithVAT);
+}
+
+// Функция для расчета всех строк
+function calculateAll() {
+    for (let i = 0; i < contractsData.length; i++) {
+        calculateRow(i);
+    }
+    updateTotals();
+    alert("Все значения пересчитаны!");
+}
+
+// Функция для обновления итоговых значений
+function updateTotals() {
+    let totalWithoutVAT = 0;
+    let totalVAT = 0;
+    let totalWithVAT = 0;
+    
+    // Суммируем данные из всех строк
+    contractsData.forEach(data => {
+        const rowTotalWithoutVAT = data.priceWithoutVAT * data.quantity;
+        totalWithoutVAT += rowTotalWithoutVAT;
+        totalVAT += data.vatAmount;
+        totalWithVAT += data.totalWithVAT;
+    });
+    
+    // Обновляем отображение итогов
+    document.getElementById('totalWithoutVAT').textContent = formatCurrency(totalWithoutVAT) + ' руб.';
+    document.getElementById('totalVAT').textContent = formatCurrency(totalVAT) + ' руб.';
+    document.getElementById('totalWithVAT').textContent = formatCurrency(totalWithVAT) + ' руб.';
+}
+
+// Функция для форматирования чисел в денежный формат
+function formatCurrency(value) {
+    if (isNaN(value) || value === 0) return '0.00';
+    
+    // Округляем до 2 знаков после запятой
+    const roundedValue = Math.round(value * 100) / 100;
+    
+    // Форматируем с разделителями тысяч
+    return roundedValue.toLocaleString('ru-RU', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// Экспорт данных в JSON (дополнительная функция)
+function exportData() {
+    const dataToExport = {
+        contracts: contractsData,
+        totals: {
+            totalWithoutVAT: contractsData.reduce((sum, data) => sum + (data.priceWithoutVAT * data.quantity), 0),
+            totalVAT: contractsData.reduce((sum, data) => sum + data.vatAmount, 0),
+            totalWithVAT: contractsData.reduce((sum, data) => sum + data.totalWithVAT, 0)
+        },
+        vatRate: VAT_RATE * 100,
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `договора_расчет_${new Date().toISOString().slice(0,10)}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+// Импорт данных из JSON (дополнительная функция)
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                if (importedData.contracts && Array.isArray(importedData.contracts)) {
+                    // Очищаем текущие данные
+                    contractsData = [];
+                    document.getElementById('tableBody').innerHTML = '';
+                    rowCount = 0;
+                    
+                    // Добавляем импортированные строки
+                    importedData.contracts.forEach((contract, index) => {
+                        addRow();
+                        
+                        // Заполняем данные
+                        const currentRowIndex = index;
+                        contractsData[currentRowIndex].name = contract.name || '';
+                        contractsData[currentRowIndex].quantity = contract.quantity || 0;
+                        contractsData[currentRowIndex].priceWithoutVAT = contract.priceWithoutVAT || 0;
+                        
+                        // Обновляем значения в полях ввода
+                        const rows = document.getElementById('tableBody').querySelectorAll('tr');
+                        const currentRow = rows[currentRowIndex];
+                        
+                        if (currentRow) {
+                            currentRow.querySelector('.product-name').value = contract.name || '';
+                            currentRow.querySelector('.quantity').value = contract.quantity || '';
+                            currentRow.querySelector('.price').value = contract.priceWithoutVAT || '';
+                        }
+                    });
+                    
+                    // Пересчитываем все
+                    calculateAll();
+                    alert(`Данные успешно импортированы! Загружено ${importedData.contracts.length} строк.`);
+                } else {
+                    alert('Ошибка: неверный формат файла!');
+                }
+            } catch (error) {
+                alert('Ошибка при чтении файла: ' + error.message);
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
