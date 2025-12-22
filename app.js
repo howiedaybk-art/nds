@@ -1,363 +1,291 @@
-// Константы системы
-const MIN_LEVEL = 30; // Минимальный уровень в емкости (%)
-const MAX_LEVEL = 90; // Максимальный уровень в емкости (%)
+// Константа НДС
+const VAT_RATE = 0.22; // 22%
 
-// Элементы DOM
-const currentLevelInput = document.getElementById('currentLevel');
-const deliveryDaysInput = document.getElementById('deliveryDays');
-const orderVolumeInput = document.getElementById('orderVolume');
-const calculateBtn = document.getElementById('calculateBtn');
-const saveDataBtn = document.getElementById('saveDataBtn');
-const resetDataBtn = document.getElementById('resetDataBtn');
-const dailyInputsContainer = document.getElementById('dailyInputsContainer');
+// Глобальные переменные для хранения данных
+let rowCount = 0;
+let contractsData = [];
 
-// Элементы для отображения результатов
-const consumptionRateElement = document.getElementById('consumptionRate');
-const daysToDeliveryElement = document.getElementById('daysToDelivery');
-const orderDateElement = document.getElementById('orderDate');
-const deliveryDateElement = document.getElementById('deliveryDate');
-
-// Загрузка данных из localStorage при загрузке страницы
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDateInputs(); // Инициализация полей с датами
-    loadSavedData();
-    calculateBtn.addEventListener('click', calculateDelivery);
-    saveDataBtn.addEventListener('click', saveData);
-    resetDataBtn.addEventListener('click', resetData);
+    // Добавляем первую строку по умолчанию
+    addRow();
     
-    // Автоматически сохраняем данные при изменении
-    currentLevelInput.addEventListener('change', saveData);
-    deliveryDaysInput.addEventListener('change', saveData);
-    orderVolumeInput.addEventListener('change', saveData);
+    // Устанавливаем обработчики событий для уже существующих элементов
+    document.addEventListener('input', function(event) {
+        if (event.target.classList.contains('quantity') || event.target.classList.contains('price')) {
+            const rowIndex = parseInt(event.target.closest('tr').dataset.index);
+            calculateRow(rowIndex);
+            updateTotals();
+        }
+    });
 });
 
-// Инициализация полей с датами (теперь только 6 дней, без текущей даты)
-function initializeDateInputs() {
-    if (!dailyInputsContainer) return;
+// Функция для добавления новой строки в таблицу
+function addRow() {
+    const tableBody = document.getElementById('tableBody');
+    rowCount++;
     
-    // Очищаем контейнер
-    dailyInputsContainer.innerHTML = '';
+    // Создаем новый объект для хранения данных строки
+    contractsData.push({
+        id: rowCount,
+        name: '',
+        quantity: 0,
+        priceWithoutVAT: 0,
+        priceWithVAT: 0,
+        vatAmount: 0,
+        totalWithVAT: 0
+    });
     
-    // Создаем поля для последних 6 дней (без текущего дня)
-    for (let i = 1; i <= 6; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i); // От 1 до 6 дней назад
-        
-        const dayInput = document.createElement('div');
-        dayInput.className = 'daily-input';
-        
-        const dateStr = formatDateForInput(date);
-        
-        // Без подписи, только поле выбора даты и поле ввода уровня
-        dayInput.innerHTML = `
-            <div class="compact-input-group">
-                <input type="date" id="date${i}" class="date-input" value="${dateStr}">
-                <input type="number" id="day${i}" class="level-input" min="0" max="100" step="0.1" placeholder="Уровень %">
-            </div>
-        `;
-        
-        dailyInputsContainer.appendChild(dayInput);
-        
-        // Добавляем обработчики для сохранения данных
-        const dateInput = document.getElementById(`date${i}`);
-        const levelInput = document.getElementById(`day${i}`);
-        
-        if (dateInput) {
-            dateInput.addEventListener('change', saveData);
-        }
-        
-        if (levelInput) {
-            levelInput.addEventListener('change', saveData);
-        }
-    }
+    // Создаем новую строку
+    const newRow = document.createElement('tr');
+    newRow.dataset.index = rowCount - 1; // Индекс в массиве
+    
+    newRow.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" class="product-name" placeholder="Введите наименование" value=""></td>
+        <td><input type="number" class="quantity" min="0" step="0.01" placeholder="0" value=""></td>
+        <td><input type="number" class="price" min="0" step="0.01" placeholder="0.00" value=""></td>
+        <td><div class="result" id="priceWithVAT-${rowCount}">0.00</div></td>
+        <td><div class="result" id="vatAmount-${rowCount}">0.00</div></td>
+        <td><div class="result" id="totalWithVAT-${rowCount}">0.00</div></td>
+        <td><button class="btn-delete" onclick="deleteRow(${rowCount - 1})" style="padding: 5px 10px; font-size: 12px;"><i class="fas fa-times"></i></button></td>
+    `;
+    
+    tableBody.appendChild(newRow);
+    
+    // Устанавливаем обработчики событий для новой строки
+    const quantityInput = newRow.querySelector('.quantity');
+    const priceInput = newRow.querySelector('.price');
+    const nameInput = newRow.querySelector('.product-name');
+    
+    quantityInput.addEventListener('input', function() {
+        const rowIndex = parseInt(this.closest('tr').dataset.index);
+        contractsData[rowIndex].quantity = parseFloat(this.value) || 0;
+        calculateRow(rowIndex);
+        updateTotals();
+    });
+    
+    priceInput.addEventListener('input', function() {
+        const rowIndex = parseInt(this.closest('tr').dataset.index);
+        contractsData[rowIndex].priceWithoutVAT = parseFloat(this.value) || 0;
+        calculateRow(rowIndex);
+        updateTotals();
+    });
+    
+    nameInput.addEventListener('input', function() {
+        const rowIndex = parseInt(this.closest('tr').dataset.index);
+        contractsData[rowIndex].name = this.value;
+    });
+    
+    // Первоначальный расчет для новой строки
+    calculateRow(rowCount - 1);
+    updateTotals();
 }
 
-// Форматирование даты для input[type="date"]
-function formatDateForInput(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// Функция загрузки сохраненных данных
-function loadSavedData() {
-    if (localStorage.getItem('nitrogenData')) {
-        try {
-            const savedData = JSON.parse(localStorage.getItem('nitrogenData'));
-            
-            // Загружаем данные за 6 дней
-            for (let i = 1; i <= 6; i++) {
-                const levelInput = document.getElementById(`day${i}`);
-                const dateInput = document.getElementById(`date${i}`);
-                
-                if (levelInput && savedData.dailyLevels && savedData.dailyLevels[i-1] !== undefined) {
-                    levelInput.value = savedData.dailyLevels[i-1];
-                }
-                
-                if (dateInput && savedData.dailyDates && savedData.dailyDates[i-1]) {
-                    dateInput.value = savedData.dailyDates[i-1];
-                }
-            }
-            
-            // Загружаем другие данные
-            if (savedData.currentLevel !== undefined) currentLevelInput.value = savedData.currentLevel;
-            if (savedData.deliveryDays !== undefined) deliveryDaysInput.value = savedData.deliveryDays;
-            if (savedData.orderVolume !== undefined) {
-                orderVolumeInput.value = savedData.orderVolume;
-            }
-            
-            console.log('Данные успешно загружены из localStorage');
-        } catch (error) {
-            console.error('Ошибка при загрузке данных:', error);
-            // Если есть ошибка, инициализируем даты заново
-            initializeDateInputs();
-        }
+// Функция для удаления строки по индексу
+function deleteRow(index) {
+    const tableBody = document.getElementById('tableBody');
+    const rows = tableBody.querySelectorAll('tr');
+    
+    if (rows.length > 1) {
+        // Удаляем строку из DOM
+        rows[index].remove();
+        
+        // Удаляем данные из массива
+        contractsData.splice(index, 1);
+        
+        // Обновляем индексы и номера строк
+        updateRowNumbers();
+        
+        // Пересчитываем итоги
+        updateTotals();
     } else {
-        console.log('Сохраненные данные не найдены');
+        alert("Должна остаться хотя бы одна строка!");
     }
 }
 
-// Функция сохранения данных
-function saveData() {
-    const dailyLevels = [];
-    const dailyDates = [];
-    
-    // Собираем данные за 6 дней
-    for (let i = 1; i <= 6; i++) {
-        const levelInput = document.getElementById(`day${i}`);
-        const dateInput = document.getElementById(`date${i}`);
-        
-        if (levelInput) {
-            dailyLevels.push(parseFloat(levelInput.value) || 0);
-        }
-        
-        if (dateInput) {
-            dailyDates.push(dateInput.value || formatDateForInput(new Date(Date.now() - i * 24 * 60 * 60 * 1000)));
-        }
+// Функция для удаления последней строки
+function deleteLastRow() {
+    if (contractsData.length > 1) {
+        deleteRow(contractsData.length - 1);
+    } else {
+        alert("Должна остаться хотя бы одна строка!");
     }
+}
+
+// Функция для обновления номеров строк после удаления
+function updateRowNumbers() {
+    const tableBody = document.getElementById('tableBody');
+    const rows = tableBody.querySelectorAll('tr');
     
-    const dataToSave = {
-        dailyLevels: dailyLevels,
-        dailyDates: dailyDates,
-        currentLevel: parseFloat(currentLevelInput.value) || 0,
-        deliveryDays: parseInt(deliveryDaysInput.value) || 0,
-        orderVolume: parseFloat(orderVolumeInput.value) || 45,
-        lastUpdated: new Date().toISOString()
+    rowCount = rows.length;
+    
+    rows.forEach((row, index) => {
+        // Обновляем номер в первой ячейке
+        row.cells[0].textContent = index + 1;
+        
+        // Обновляем dataset индекс
+        row.dataset.index = index;
+        
+        // Обновляем ID в данных
+        contractsData[index].id = index + 1;
+        
+        // Обновляем ID элементов результатов
+        row.querySelector(`#priceWithVAT-${index + 2}`).id = `priceWithVAT-${index + 1}`;
+        row.querySelector(`#vatAmount-${index + 2}`).id = `vatAmount-${index + 1}`;
+        row.querySelector(`#totalWithVAT-${index + 2}`).id = `totalWithVAT-${index + 1}`;
+        
+        // Обновляем обработчик кнопки удаления
+        const deleteButton = row.querySelector('button');
+        deleteButton.onclick = function() { deleteRow(index); };
+    });
+}
+
+// Функция для расчета данных одной строки
+function calculateRow(rowIndex) {
+    if (rowIndex < 0 || rowIndex >= contractsData.length) return;
+    
+    const data = contractsData[rowIndex];
+    
+    // Расчет стоимости единицы с НДС
+    data.priceWithVAT = data.priceWithoutVAT * (1 + VAT_RATE);
+    
+    // Расчет НДС для единицы товара
+    data.vatPerUnit = data.priceWithoutVAT * VAT_RATE;
+    
+    // Расчет НДС для общего количества
+    data.vatAmount = data.vatPerUnit * data.quantity;
+    
+    // Расчет общей стоимости с НДС
+    data.totalWithVAT = data.priceWithVAT * data.quantity;
+    
+    // Обновление отображения в таблице
+    document.getElementById(`priceWithVAT-${data.id}`).textContent = formatCurrency(data.priceWithVAT);
+    document.getElementById(`vatAmount-${data.id}`).textContent = formatCurrency(data.vatAmount);
+    document.getElementById(`totalWithVAT-${data.id}`).textContent = formatCurrency(data.totalWithVAT);
+}
+
+// Функция для расчета всех строк
+function calculateAll() {
+    for (let i = 0; i < contractsData.length; i++) {
+        calculateRow(i);
+    }
+    updateTotals();
+    alert("Все значения пересчитаны!");
+}
+
+// Функция для обновления итоговых значений
+function updateTotals() {
+    let totalWithoutVAT = 0;
+    let totalVAT = 0;
+    let totalWithVAT = 0;
+    
+    // Суммируем данные из всех строк
+    contractsData.forEach(data => {
+        const rowTotalWithoutVAT = data.priceWithoutVAT * data.quantity;
+        totalWithoutVAT += rowTotalWithoutVAT;
+        totalVAT += data.vatAmount;
+        totalWithVAT += data.totalWithVAT;
+    });
+    
+    // Обновляем отображение итогов
+    document.getElementById('totalWithoutVAT').textContent = formatCurrency(totalWithoutVAT) + ' руб.';
+    document.getElementById('totalVAT').textContent = formatCurrency(totalVAT) + ' руб.';
+    document.getElementById('totalWithVAT').textContent = formatCurrency(totalWithVAT) + ' руб.';
+}
+
+// Функция для форматирования чисел в денежный формат
+function formatCurrency(value) {
+    if (isNaN(value) || value === 0) return '0.00';
+    
+    // Округляем до 2 знаков после запятой
+    const roundedValue = Math.round(value * 100) / 100;
+    
+    // Форматируем с разделителями тысяч
+    return roundedValue.toLocaleString('ru-RU', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// Экспорт данных в JSON (дополнительная функция)
+function exportData() {
+    const dataToExport = {
+        contracts: contractsData,
+        totals: {
+            totalWithoutVAT: contractsData.reduce((sum, data) => sum + (data.priceWithoutVAT * data.quantity), 0),
+            totalVAT: contractsData.reduce((sum, data) => sum + data.vatAmount, 0),
+            totalWithVAT: contractsData.reduce((sum, data) => sum + data.totalWithVAT, 0)
+        },
+        vatRate: VAT_RATE * 100,
+        exportDate: new Date().toISOString()
     };
     
-    try {
-        localStorage.setItem('nitrogenData', JSON.stringify(dataToSave));
-        console.log('Данные успешно сохранены');
-        
-        // Показываем уведомление о сохранении
-        showNotification('Данные сохранены!', 'success');
-    } catch (error) {
-        console.error('Ошибка при сохранении данных:', error);
-        showNotification('Ошибка при сохранении данных', 'error');
-    }
-}
-
-// Функция сброса данных
-function resetData() {
-    if (confirm('Вы уверены, что хотите сбросить все данные? Это действие нельзя отменить.')) {
-        // Сбрасываем даты на последние 6 дней
-        initializeDateInputs();
-        
-        // Очищаем другие поля
-        currentLevelInput.value = '';
-        deliveryDaysInput.value = '';
-        orderVolumeInput.value = '45';
-        
-        // Очищаем результаты
-        consumptionRateElement.textContent = '-';
-        daysToDeliveryElement.textContent = '-';
-        orderDateElement.textContent = '-';
-        deliveryDateElement.textContent = '-';
-        
-        // Удаляем данные из localStorage
-        localStorage.removeItem('nitrogenData');
-        
-        showNotification('Все данные сброшены', 'info');
-    }
-}
-
-// Функция расчета средней скорости потребления
-function calculateConsumptionRate() {
-    const levelData = [];
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    // Собираем данные об уровнях и датах за 6 дней
-    for (let i = 1; i <= 6; i++) {
-        const levelInput = document.getElementById(`day${i}`);
-        const dateInput = document.getElementById(`date${i}`);
+    const exportFileDefaultName = `договора_расчет_${new Date().toISOString().slice(0,10)}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+// Импорт данных из JSON (дополнительная функция)
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
         
-        if (levelInput && dateInput && levelInput.value && dateInput.value) {
-            const level = parseFloat(levelInput.value);
-            const date = new Date(dateInput.value);
-            
-            if (!isNaN(level) && level >= 0 && level <= 100 && date instanceof Date && !isNaN(date.getTime())) {
-                levelData.push({
-                    date: date,
-                    level: level
-                });
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                if (importedData.contracts && Array.isArray(importedData.contracts)) {
+                    // Очищаем текущие данные
+                    contractsData = [];
+                    document.getElementById('tableBody').innerHTML = '';
+                    rowCount = 0;
+                    
+                    // Добавляем импортированные строки
+                    importedData.contracts.forEach((contract, index) => {
+                        addRow();
+                        
+                        // Заполняем данные
+                        const currentRowIndex = index;
+                        contractsData[currentRowIndex].name = contract.name || '';
+                        contractsData[currentRowIndex].quantity = contract.quantity || 0;
+                        contractsData[currentRowIndex].priceWithoutVAT = contract.priceWithoutVAT || 0;
+                        
+                        // Обновляем значения в полях ввода
+                        const rows = document.getElementById('tableBody').querySelectorAll('tr');
+                        const currentRow = rows[currentRowIndex];
+                        
+                        if (currentRow) {
+                            currentRow.querySelector('.product-name').value = contract.name || '';
+                            currentRow.querySelector('.quantity').value = contract.quantity || '';
+                            currentRow.querySelector('.price').value = contract.priceWithoutVAT || '';
+                        }
+                    });
+                    
+                    // Пересчитываем все
+                    calculateAll();
+                    alert(`Данные успешно импортированы! Загружено ${importedData.contracts.length} строк.`);
+                } else {
+                    alert('Ошибка: неверный формат файла!');
+                }
+            } catch (error) {
+                alert('Ошибка при чтении файла: ' + error.message);
             }
-        }
-    }
-    
-    // Сортируем по дате (от старых к новым)
-    levelData.sort((a, b) => a.date - b.date);
-    
-    // Если данных меньше 2, нельзя рассчитать потребление
-    if (levelData.length < 2) {
-        console.log('Недостаточно данных для расчета скорости потребления');
-        return 0;
-    }
-    
-    // Рассчитываем общее потребление за весь период
-    const firstData = levelData[0];
-    const lastData = levelData[levelData.length - 1];
-    
-    // Разница в уровне между первым и последним измерением
-    const totalLevelDifference = firstData.level - lastData.level;
-    
-    // Разница во времени в днях
-    const timeDifferenceInMs = lastData.date - firstData.date;
-    const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
-    
-    // Если разница во времени слишком мала или отрицательная
-    if (timeDifferenceInDays <= 0) {
-        console.log('Некорректный временной интервал');
-        return 0;
-    }
-    
-    // Средняя скорость потребления в %/день
-    const avgConsumption = totalLevelDifference / timeDifferenceInDays;
-    
-    console.log(`Расчет потребления: разница уровней = ${totalLevelDifference}%, период = ${timeDifferenceInDays.toFixed(1)} дней, скорость = ${avgConsumption.toFixed(2)}%/день`);
-    
-    return avgConsumption > 0 ? avgConsumption : 0;
-}
-
-// Функция расчета поставки
-function calculateDelivery() {
-    // Получаем значения из полей ввода
-    const currentLevel = parseFloat(currentLevelInput.value);
-    const deliveryDays = parseInt(deliveryDaysInput.value);
-    const orderVolumePercent = parseFloat(orderVolumeInput.value);
-    
-    // Проверяем введенные данные
-    if (isNaN(currentLevel) || currentLevel < 0 || currentLevel > 100) {
-        showNotification('Пожалуйста, введите корректный текущий уровень (0-100%)', 'error');
-        return;
-    }
-    
-    if (isNaN(deliveryDays) || deliveryDays < 0) {
-        showNotification('Пожалуйста, введите корректное количество дней доставки', 'error');
-        return;
-    }
-    
-    // Рассчитываем среднюю скорость потребления
-    const avgConsumption = calculateConsumptionRate();
-    
-    // Рассчитываем, через сколько дней достигнем минимального уровня
-    let daysToMinLevel = 0;
-    if (avgConsumption > 0) {
-        daysToMinLevel = (currentLevel - MIN_LEVEL) / avgConsumption;
-        console.log(`Дней до мин. уровня: (${currentLevel} - ${MIN_LEVEL}) / ${avgConsumption.toFixed(2)} = ${daysToMinLevel.toFixed(1)}`);
-    }
-    
-    // Рассчитываем рекомендуемую дату заказа (с учетом дней доставки)
-    let daysToOrder = Math.floor(daysToMinLevel - deliveryDays);
-    
-    // Если дней до заказа уже мало или отрицательное значение, рекомендуем заказ сегодня
-    if (daysToOrder < 0) {
-        daysToOrder = 0;
-    }
-    
-    // Рассчитываем даты
-    const today = new Date();
-    const orderDate = new Date(today);
-    orderDate.setDate(orderDate.getDate() + daysToOrder);
-    
-    const deliveryDate = new Date(orderDate);
-    deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
-    
-    // Форматируем даты для отображения
-    const formatDate = (date) => {
-        return date.toLocaleDateString('ru-RU', {
-            weekday: 'short',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        };
+        
+        reader.readAsText(file);
     };
     
-    // Обновляем результаты на странице
-    if (avgConsumption > 0) {
-        consumptionRateElement.textContent = `${avgConsumption.toFixed(2)}% в день`;
-        daysToDeliveryElement.textContent = `${Math.floor(daysToMinLevel)} дней`;
-        orderDateElement.textContent = formatDate(orderDate);
-        deliveryDateElement.textContent = formatDate(deliveryDate);
-        
-        // Добавляем предупреждение, если сроки близки
-        if (daysToOrder <= 2) {
-            orderDateElement.innerHTML = `${formatDate(orderDate)} <span style="color:#e74c3c; font-size:1rem;">(СРОЧНО!)</span>`;
-        }
-    } else {
-        consumptionRateElement.textContent = 'Недостаточно данных';
-        daysToDeliveryElement.textContent = 'Недостаточно данных';
-        orderDateElement.textContent = 'Недостаточно данных';
-        deliveryDateElement.textContent = 'Недостаточно данных';
-    }
-    
-    // Автоматически сохраняем данные после расчета
-    saveData();
-}
-
-// Функция для отображения уведомлений
-function showNotification(message, type) {
-    // Удаляем предыдущее уведомление, если оно есть
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    
-    // Создаем элемент уведомления
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    
-    // Стилизуем уведомление
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '15px 20px';
-    notification.style.borderRadius = '5px';
-    notification.style.color = 'white';
-    notification.style.fontWeight = '600';
-    notification.style.zIndex = '1000';
-    notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    notification.style.transition = 'opacity 0.3s';
-    
-    // Цвета в зависимости от типа уведомления
-    if (type === 'success') {
-        notification.style.backgroundColor = '#2ecc71';
-    } else if (type === 'error') {
-        notification.style.backgroundColor = '#e74c3c';
-    } else {
-        notification.style.backgroundColor = '#3498db';
-    }
-    
-    // Добавляем уведомление на страницу
-    document.body.appendChild(notification);
-    
-    // Удаляем уведомление через 3 секунды
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
+    input.click();
 }
