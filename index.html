@@ -62,31 +62,6 @@
             opacity: 0.9;
         }
         
-        .instructions {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            box-shadow: var(--shadow);
-            border-left: 5px solid var(--accent-color);
-        }
-        
-        .instructions h3 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .instructions ul {
-            padding-left: 20px;
-        }
-        
-        .instructions li {
-            margin-bottom: 8px;
-        }
-        
         .calculator-container {
             background-color: white;
             border-radius: 8px;
@@ -289,7 +264,7 @@
                 grid-template-columns: 1fr;
             }
             
-            header, .instructions, .calculator-container, .totals {
+            header, .calculator-container, .totals {
                 padding: 15px;
             }
             
@@ -340,18 +315,6 @@
             <p class="subtitle">Расчет стоимости единицы с НДС, суммы договора и НДС</p>
         </header>
         
-        <div class="instructions">
-            <h3><i class="fas fa-info-circle"></i> Инструкция по использованию</h3>
-            <ul>
-                <li>Введите <strong>количество товара</strong> и <strong>стоимость единицы без НДС</strong> в любую строку таблицы</li>
-                <li>Все остальные значения будут рассчитаны автоматически</li>
-                <li>Для добавления новой строки нажмите кнопку "Добавить строку"</li>
-                <li>Для удаления строки нажмите на кнопку с корзиной в конце строки</li>
-                <li>Для расчета итоговых сумм по всем позициям нажмите "Рассчитать итоги"</li>
-                <li>Для очистки всех данных нажмите "Очистить все"</li>
-            </ul>
-        </div>
-        
         <div class="calculator-container">
             <div class="table-container">
                 <table id="contractTable">
@@ -370,12 +333,6 @@
                     </thead>
                     <tbody id="tableBody">
                         <!-- Строки будут добавляться динамически -->
-                        <tr class="empty-row">
-                            <td colspan="9" class="empty-row-msg">
-                                <i class="fas fa-plus-circle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                                Нажмите "Добавить строку" для начала расчета
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -416,7 +373,7 @@
         </div>
         
         <footer>
-            <p>Калькулятор для работы с договорами &copy; 2023</p>
+            <p>Калькулятор для работы с договорами</p>
             <p>Ставка НДС: 22%</p>
         </footer>
     </div>
