@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор договоров с НДС</title>
+    <title>Калькулятор договоров</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,269 +14,317 @@
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
             padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
         }
         
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 25px;
             margin-bottom: 30px;
+        }
+        
+        header {
             text-align: center;
-        }
-        
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-        }
-        
-        .header p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-        
-        .calculator-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
         }
         
-        .table-container {
-            overflow-x: auto;
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1rem;
         }
         
-        th {
-            background: #4a6ee0;
-            color: white;
-            padding: 15px;
-            text-align: left;
+        .calculator-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
             font-weight: 600;
-        }
-        
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        tr:hover {
-            background-color: #f9f9f9;
+            color: #34495e;
+            font-size: 1rem;
         }
         
         input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #ddd;
+            padding: 14px 16px;
+            border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
+            font-size: 1.1rem;
+            transition: border-color 0.3s;
+            background-color: #fafafa;
         }
         
         input:focus {
-            border-color: #4a6ee0;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(74, 110, 224, 0.1);
+            border-color: #3498db;
+            background-color: white;
         }
         
-        .result {
-            font-weight: 600;
-            color: #333;
-            background-color: #f8f9fa;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 2px solid #e9ecef;
-            min-height: 44px;
+        .results-section {
+            background-color: #f8fafc;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .result-title {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
+            gap: 10px;
         }
         
-        .totals {
+        .result-title i {
+            color: #3498db;
+        }
+        
+        .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 20px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #eee;
         }
         
-        .total-card {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
+        .result-item {
+            background-color: white;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eaeaea;
         }
         
-        .total-card h3 {
-            color: #444;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
+        .result-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
-        .total-value {
-            font-size: 1.8rem;
+        .result-value {
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #4a6ee0;
+            color: #2c3e50;
+        }
+        
+        .highlight {
+            color: #2ecc71;
+        }
+        
+        .tax-highlight {
+            color: #e74c3c;
         }
         
         .buttons {
             display: flex;
             gap: 15px;
-            margin-top: 20px;
-            justify-content: center;
+            margin-top: 25px;
         }
         
         button {
-            padding: 12px 25px;
+            padding: 16px 24px;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            flex: 1;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
         }
         
-        .btn-add {
-            background: #4a6ee0;
+        .calculate-btn {
+            background-color: #3498db;
             color: white;
         }
         
-        .btn-add:hover {
-            background: #3a5ed0;
-            transform: translateY(-2px);
+        .calculate-btn:hover {
+            background-color: #2980b9;
         }
         
-        .btn-delete {
-            background: #ff6b6b;
-            color: white;
+        .reset-btn {
+            background-color: #ecf0f1;
+            color: #34495e;
         }
         
-        .btn-delete:hover {
-            background: #ff5252;
-            transform: translateY(-2px);
+        .reset-btn:hover {
+            background-color: #d5dbdb;
         }
         
-        .btn-calculate {
-            background: #20c997;
-            color: white;
-        }
-        
-        .btn-calculate:hover {
-            background: #1ba87e;
-            transform: translateY(-2px);
-        }
-        
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 30px;
+        .instructions {
+            background-color: #fff8e1;
+            border-radius: 10px;
             padding: 20px;
-            opacity: 0.8;
+            margin-top: 30px;
+            border-left: 4px solid #f1c40f;
+        }
+        
+        .instructions h3 {
+            color: #d35400;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions p {
+            margin-bottom: 10px;
+            color: #7d6608;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
         }
         
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
+            body {
+                padding: 15px;
             }
             
-            .header, .calculator-card {
+            .container {
                 padding: 20px;
             }
             
-            .header h1 {
-                font-size: 2rem;
+            .results-grid {
+                grid-template-columns: 1fr;
             }
             
             .buttons {
                 flex-direction: column;
             }
             
-            th, td {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            input {
+                font-size: 1rem;
+                padding: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
                 padding: 10px;
-                font-size: 14px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .result-value {
+                font-size: 1.2rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1><i class="fas fa-file-contract"></i> Калькулятор договоров с НДС</h1>
-            <p>Рассчитайте стоимость договоров с учётом НДС 22%. Введите количество товара и стоимость без НДС.</p>
-        </div>
+        <header>
+            <h1>Калькулятор стоимости договоров</h1>
+            <p class="subtitle">Расчёт стоимости единицы товара и договора с НДС и без</p>
+        </header>
         
-        <div class="calculator-card">
-            <div class="table-container">
-                <table id="contractsTable">
-                    <thead>
-                        <tr>
-                            <th width="5%">№</th>
-                            <th width="25%">Наименование товара/услуги</th>
-                            <th width="15%">Количество</th>
-                            <th width="15%">Стоимость без НДС (руб.)</th>
-                            <th width="15%">Стоимость с НДС (руб.)</th>
-                            <th width="15%">Сумма НДС (руб.)</th>
-                            <th width="15%">Сумма с НДС (руб.)</th>
-                            <th width="5%"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <!-- Строки будут добавляться здесь -->
-                    </tbody>
-                </table>
+        <div class="calculator-form">
+            <div class="input-group">
+                <label for="quantity"><i class="fas fa-boxes"></i> Количество товара (шт.)</label>
+                <input type="number" id="quantity" min="1" step="1" placeholder="Введите количество">
+            </div>
+            
+            <div class="input-group">
+                <label for="price"><i class="fas fa-tag"></i> Стоимость единицы товара без НДС (руб.)</label>
+                <input type="number" id="price" min="0" step="0.01" placeholder="Введите стоимость без НДС">
             </div>
             
             <div class="buttons">
-                <button class="btn-add" onclick="addRow()">
-                    <i class="fas fa-plus-circle"></i> Добавить строку
+                <button class="calculate-btn" id="calculateBtn">
+                    <i class="fas fa-calculator"></i> Рассчитать
                 </button>
-                <button class="btn-delete" onclick="deleteLastRow()">
-                    <i class="fas fa-trash-alt"></i> Удалить последнюю строку
-                </button>
-                <button class="btn-calculate" onclick="calculateAll()">
-                    <i class="fas fa-calculator"></i> Пересчитать все
+                <button class="reset-btn" id="resetBtn">
+                    <i class="fas fa-redo"></i> Сбросить
                 </button>
             </div>
+        </div>
+        
+        <div class="results-section">
+            <h2 class="result-title"><i class="fas fa-chart-line"></i> Результаты расчёта</h2>
             
-            <div class="totals">
-                <div class="total-card">
-                    <h3>Общая сумма без НДС</h3>
-                    <div id="totalWithoutVAT" class="total-value">0 руб.</div>
+            <div class="results-grid">
+                <div class="result-item">
+                    <div class="result-label">
+                        <i class="fas fa-tag"></i> Стоимость единицы с НДС
+                    </div>
+                    <div class="result-value" id="unitPriceWithVAT">0.00 руб.</div>
                 </div>
-                <div class="total-card">
-                    <h3>Общая сумма НДС</h3>
-                    <div id="totalVAT" class="total-value">0 руб.</div>
+                
+                <div class="result-item">
+                    <div class="result-label">
+                        <i class="fas fa-file-contract"></i> Стоимость договора без НДС
+                    </div>
+                    <div class="result-value" id="totalPriceWithoutVAT">0.00 руб.</div>
                 </div>
-                <div class="total-card">
-                    <h3>Общая сумма с НДС</h3>
-                    <div id="totalWithVAT" class="total-value">0 руб.</div>
+                
+                <div class="result-item">
+                    <div class="result-label">
+                        <i class="fas fa-percentage"></i> Сумма НДС (22%)
+                    </div>
+                    <div class="result-value tax-highlight" id="vatAmount">0.00 руб.</div>
+                </div>
+                
+                <div class="result-item">
+                    <div class="result-label">
+                        <i class="fas fa-file-invoice-dollar"></i> Стоимость договора с НДС
+                    </div>
+                    <div class="result-value highlight" id="totalPriceWithVAT">0.00 руб.</div>
                 </div>
             </div>
         </div>
         
-        <div class="footer">
-            <p>© 2023 Калькулятор договоров. Все расчёты выполняются с НДС 22%.</p>
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> Инструкция по использованию</h3>
+            <p>1. Введите количество товара (целое число)</p>
+            <p>2. Введите стоимость единицы товара без НДС в рублях</p>
+            <p>3. Нажмите кнопку "Рассчитать" для получения результатов</p>
+            <p>4. Используйте кнопку "Сбросить" для очистки всех полей</p>
         </div>
     </div>
     
+    <footer>
+        <p>Калькулятор договоров &copy; 2023 | Для внутреннего использования</p>
+    </footer>
+
     <script src="app.js"></script>
 </body>
 </html>
